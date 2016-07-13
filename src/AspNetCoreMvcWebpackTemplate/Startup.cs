@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 using AspNetCoreMvcWebpackTemplate.Data;
 using AspNetCoreMvcWebpackTemplate.Models;
 using AspNetCoreMvcWebpackTemplate.Services;
+using AspNetCoreMvcTest.Data.Migrations;
 
 namespace AspNetCoreMvcWebpackTemplate
 {
@@ -43,15 +44,25 @@ namespace AspNetCoreMvcWebpackTemplate
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
 
-            services.AddIdentity<ApplicationUser, IdentityRole>()
+            services.AddIdentity<ApplicationUser, ApplicationRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>()
+                .AddUserManager<CustomOpenIddictManager>()
                 .AddDefaultTokenProviders();
 
             services.AddMvc();
-
+            services.AddOpenIddict<ApplicationUser, ApplicationRole, ApplicationDbContext>()
+                .DisableHttpsRequirement()
+                .UseJsonWebTokens()
+                .EnableAuthorizationEndpoint("/connect/authorize")
+                .EnableLogoutEndpoint("/connect/logout")
+                .EnableTokenEndpoint("/connect/token")
+                .EnableUserinfoEndpoint("/connect/userinfo")
+                .AllowPasswordFlow();
+            
             // Add application services.
             services.AddTransient<IEmailSender, AuthMessageSender>();
             services.AddTransient<ISmsSender, AuthMessageSender>();
+            services.AddTransient<IDatabaseInitializer, DatabaseInitializer>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -73,9 +84,20 @@ namespace AspNetCoreMvcWebpackTemplate
 
             app.UseStaticFiles();
 
-            app.UseIdentity();
+            //app.UseIdentity();
 
             // Add external authentication middleware below. To configure them please see http://go.microsoft.com/fwlink/?LinkID=532715
+            //app.UseOAuthValidation();
+            app.UseOpenIddict();
+
+            app.UseJwtBearerAuthentication(new JwtBearerOptions
+            {
+                AutomaticAuthenticate = true,
+                AutomaticChallenge = true,
+                RequireHttpsMetadata = false,
+                Audience = "http://localhost:5000/",
+                Authority = "http://localhost:5000/"
+            });
 
             app.UseMvc(routes =>
             {
@@ -83,6 +105,8 @@ namespace AspNetCoreMvcWebpackTemplate
                     name: "default",
                     template: "{controller=Home}/{action=Index}/{id?}");
             });
+            app.ApplicationServices.GetService<IDatabaseInitializer>().Seed();
+            
         }
     }
 }
