@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 
 // For more information on enabling Web API for empty projects, visit http://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -12,6 +13,7 @@ namespace AspNetCoreMvcWebpackTemplate.Controllers.Api
     public class ValuesController : Controller
     {
         // GET: api/values
+        [Authorize(Roles ="testrole")]
         [Route("api/Values")]
         [HttpGet]
         public IEnumerable<string> Get()
