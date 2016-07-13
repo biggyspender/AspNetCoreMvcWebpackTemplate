@@ -66,7 +66,7 @@ namespace AspNetCoreMvcWebpackTemplate
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory)
+        public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory, IDatabaseInitializer databaseInitializer)
         {
             loggerFactory.AddConsole(Configuration.GetSection("Logging"));
             loggerFactory.AddDebug();
@@ -105,7 +105,7 @@ namespace AspNetCoreMvcWebpackTemplate
                     name: "default",
                     template: "{controller=Home}/{action=Index}/{id?}");
             });
-            app.ApplicationServices.GetService<IDatabaseInitializer>().Seed();
+            databaseInitializer.Seed();
             
         }
     }
